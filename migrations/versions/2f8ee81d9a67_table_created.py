@@ -1,8 +1,8 @@
-"""Created
+"""Table Created
 
-Revision ID: ef45213a8e7e
+Revision ID: 2f8ee81d9a67
 Revises: 
-Create Date: 2025-05-03 17:00:02.004162
+Create Date: 2025-05-03 17:40:37.830836
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'ef45213a8e7e'
+revision = '2f8ee81d9a67'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,15 +21,11 @@ def upgrade():
     op.create_table('post',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('author', sa.String(length=32), nullable=False),
-    sa.Column('username', sa.String(length=32), nullable=False),
-    sa.Column('body', sa.String(length=140), nullable=False),
+    sa.Column('username', sa.String(length=32), nullable=True),
+    sa.Column('body', sa.String(length=140), nullable=True),
     sa.Column('date', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
-    with op.batch_alter_table('post', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_post_author'), ['author'], unique=False)
-        batch_op.create_index(batch_op.f('ix_post_username'), ['username'], unique=True)
-
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(length=64), nullable=False),
@@ -53,9 +49,5 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_user_email'))
 
     op.drop_table('user')
-    with op.batch_alter_table('post', schema=None) as batch_op:
-        batch_op.drop_index(batch_op.f('ix_post_username'))
-        batch_op.drop_index(batch_op.f('ix_post_author'))
-
     op.drop_table('post')
     # ### end Alembic commands ###
