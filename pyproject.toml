@@ -1,0 +1,1 @@
+livereload = { git = "https://github.com/lepture/python-livereload.git", branch = "master" }

@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if ip %}
+<h1>Home Page {{ ip }}</h1>
+{% else %}
+<h1>Main Page</h1>
+{% endif %}
+{% endblock %}
