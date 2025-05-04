@@ -4,7 +4,7 @@ from app import db
 import sqlalchemy as sa
 import sqlalchemy.orm as so
 from wtforms import EmailField, StringField, BooleanField, SubmitField, PasswordField, TextAreaField, ValidationError
-from wtforms.validators import DataRequired, EqualTo, Length
+from wtforms.validators import DataRequired, Email, EqualTo, Length
 
 class LoginForm(FlaskForm):
     username =  StringField('Username', validators=[DataRequired()])
@@ -13,8 +13,10 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Login')
 
 class RegisterForm(FlaskForm):
+    first = StringField('First Name', validators=[DataRequired()])
+    last = StringField('Last Name', validators=[DataRequired()])
     username = StringField('Username', validators=[DataRequired()])
-    email = EmailField('Email', validators=[DataRequired()])
+    email = EmailField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     confirm = PasswordField('Confirm Password', validators=[EqualTo('password'), DataRequired()])
     submit = SubmitField('Submit')
@@ -40,3 +42,13 @@ class PostForm(FlaskForm):
 
 class EmptyForm(FlaskForm):
     submit = SubmitField('Submit')
+
+class ResetPasswordRequestForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    submit = SubmitField('Request Password Reset')
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField('Password', validators=[DataRequired()])
+    password2 = PasswordField(
+        'Repeat Password', validators=[DataRequired(), EqualTo('password')])
+    submit = SubmitField('Request Password Reset')

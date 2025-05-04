@@ -2,10 +2,11 @@ from sqlalchemy.exc import IntegrityError
 from app import app, db
 from app.models import User, Post
 from urllib.parse import urlsplit
-from app.forms import LoginForm, RegisterForm, EditProfileForm, PostForm, EmptyForm
+from app.forms import LoginForm, RegisterForm,  ResetPasswordRequestForm, EditProfileForm, PostForm, EmptyForm
 from flask import render_template, request, flash, redirect, url_for
 from datetime import datetime, timezone
 from flask_login import login_user, current_user, logout_user, login_required
+from app.email import send_password_reset_email
 
 import sqlalchemy as sa
 import sqlalchemy.orm as so
@@ -16,9 +17,9 @@ def before_request():
         current_user.last_seen = datetime.now(timezone.utc)
         db.session.commit()
 
-@app.route('/')
-@login_required
+@app.route('/', methods=['GET','POST'])
 @app.route('/index', methods=['GET','POST'])
+@login_required
 def index():
     form = PostForm()
     if form.validate_on_submit():
@@ -28,14 +29,27 @@ def index():
         flash('Your post is now live!')
         return redirect(url_for('index'))
     posts = db.session.scalars(current_user.following_posts()).all()
-    return render_template('index.html', posts=posts, form=form)
+    page = request.args.get('page', 1, type=int)
+    posts = db.paginate(current_user.following_posts(), page=page,
+                        per_page=app.config['POSTS_PER_PAGE'], error_out=False)
+    next_url = url_for('index', page=posts.next_num) \
+        if posts.has_next else None
+    prev_url = url_for('index', page=posts.prev_num) \
+        if posts.has_prev else None
+    return render_template('index.html', posts=posts.items, next_url=next_url, prev_url=prev_url, user=current_user, form=form)
 
 @app.route('/explore')
 @login_required
 def explore():
+    page = request.args.get('page', 1, type=int)
     query = sa.select(Post).order_by(Post.timestamp.desc())
-    posts = db.session.scalars(query).all()
-    return render_template('index.html', title='Explore', posts=posts)
+    posts = db.paginate(query, page=page,
+                        per_page=app.config['POSTS_PER_PAGE'], error_out=False)
+    next_url = url_for('explore', page=posts.next_num) \
+        if posts.has_next else None
+    prev_url = url_for('explore', page=posts.prev_num) \
+        if posts.has_prev else None
+    return render_template('index.html', user=current_user, posts=posts.items, next_url=next_url, prev_url=prev_url)
 
 @app.route('/login', methods=['GET','POST'])
 def login():
@@ -58,7 +72,7 @@ def register():
         return redirect(url_for('dashboard', username=current_user.username))
     form = RegisterForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data)
+        user = User(first=form.first.data, last=form.last.data, username=form.username.data, email=form.email.data)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
@@ -74,9 +88,18 @@ def logout():
 @app.route('/dashboard/<username>')
 @login_required
 def dashboard(username):
-    form = EmptyForm()
     user = db.first_or_404(sa.select(User).where(User.username == username))
-    return render_template('dashboard.html', user=user, form=form)
+    page = request.args.get('page', 1, type=int)
+    query = user.posts.select().order_by(Post.timestamp.desc())
+    posts = db.paginate(query, page=page,
+                        per_page=app.config['POSTS_PER_PAGE'],
+                        error_out=False)
+    next_url = url_for('dashboard', username=user.username, page=posts.next_num) \
+        if posts.has_next else None
+    prev_url = url_for('dashboard', username=user.username, page=posts.prev_num) \
+        if posts.has_prev else None
+    form = EmptyForm()
+    return render_template('dashboard.html', user=user, form=form, posts=posts.items, next_url=next_url, prev_url=prev_url)
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
@@ -133,12 +156,31 @@ def unfollow(username):
     else:
         return redirect(url_for('index'))
 
-#@app.route('/post', methods=['GET','POST'])
-#def post():
-#    form = PostForm()
-#    if form.validate_on_submit:
-#        post = Post(author=current_user.username, username=form.username.data, body=form.body.data)
-#        # post.date = datetime.now(timezone.utc)
-#        db.session.add(post)
-#        db.session.commit()
-#    return render_template('posts.html', form=form)
+@app.route('/reset_password_request', methods=['GET', 'POST'])
+def reset_password_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = ResetPasswordRequestForm()
+    if form.validate_on_submit():
+        user = db.session.scalar(
+            sa.select(User).where(User.email == form.email.data))
+        if user:
+            send_password_reset_email(user)
+        flash('Check your email for the instructions to reset your password')
+        return redirect(url_for('login'))
+    return render_template('reset_password_request.html', title='Reset Password', form=form)
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    user = User.verify_reset_password_token(token)
+    if not user:
+        return redirect(url_for('index'))
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user.set_password(form.password.data)
+        db.session.commit()
+        flash('Your password has been reset.')
+        return redirect(url_for('login'))
+    return render_template('reset_password.html', form=form)

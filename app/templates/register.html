@@ -10,30 +10,42 @@
 {% block content %}
     <form action="" method="post" novalidate>
         {{ form.hidden_tag() }}
-        <p>
-            {{ form.email.label }}<br>{{ form.email(size=32) }}
+        <div class="row">
+            <div class="col">
+                {{ form.first(class="form-control", placeholder="Enter First Name") }}
+            </div>
+            <div class="col">
+                {{ form.last(class="form-control", placeholder="Enter Last Name") }}
+            </div>
+        </div>
+        <br>
+        <div class="form-group">
+            {{ form.email(size=32, class="form-control", id="exampleInputEmail1", placeholder="Enter Email") }}
+            <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small><br>
             {% for error in form.email.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
-        </p>
-        <p>
-            {{ form.username.label }}<br>{{ form.username(size=32) }}
+        </div>
+        <div class="form-group">
+            {{ form.username(size=32, class="form-control", placeholder="Create Username") }}
+            <small id="emailHelp" class="form-text text-muted">Username Should Contain atleast 1 Uppercase Letter, 1 Symbol, and 1 Number.</small><br>
             {% for error in form.username.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
-        </p>
-        <p>
-            {{ form.password.label }}<br>{{ form.password(size=32) }}
+        </div>
+        <div class="form-group">
+            {{ form.password(size=32, class="form-control", placeholder="Create Password") }}
             {% for error in form.password.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
-        </p>
-        <p>
-            {{ form.confirm.label }}<br>{{ form.confirm(size=32) }}
+        </div>
+        <br>
+        <div class="form-group">
+            {{ form.confirm(size=32, class="form-control", placeholder="Confirm Password") }}
             {% for error in form.confirm.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
-        </p>
-        <p>{{ form.submit() }}</p>
+        </div>
+        {{ form.submit(class="btn btn-primary") }}
     </form>
 {% endblock %}

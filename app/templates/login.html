@@ -10,20 +10,29 @@
 {% block content %}
     <form action="" method="post" novalidate>
         {{ form.hidden_tag() }}
-        <p>
-            {{ form.username.label }}<br>{{ form.username(size=32) }}
-            {% for error in form.username.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>New User? <a href="{{ url_for('register') }}">Register</a></p>
-        <p>
-            {{ form.password.label }}<br>{{ form.password(size=32) }}
-            {% for error in form.password.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>{{ form.remember_me() }}{{ form.remember_me.label }}</p>
-        <p>{{ form.submit() }}</p>
+        <div class="form-group">
+                {{ form.username(size=32, class="form-control", placeholder="Enter Username") }}
+                {% for error in form.username.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </div>
+            <br>
+            <div class="form-group">
+                {{ form.password(size=32, class="form-control", placeholder="Enter Password") }}
+                {% for error in form.password.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </div>
+            <p>
+                Forgot Your Password?
+                <a href="{{ url_for('reset_password_request') }}">Click to Reset It</a>
+            </p>
+            <div class="form-check">
+                {{ form.remember_me(class="form-check-input", id="exampleCheck1") }}
+                <label class="form-check-label" for="exampleCheck1">Remember Me</label>
+                <p>New User? <a href="{{ url_for('register') }}">Register</a></p>
+            </div>
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
     </form>
 {% endblock %}
